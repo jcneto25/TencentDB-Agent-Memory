@@ -2023,7 +2023,10 @@ export class VectorStore implements IMemoryStore {
     if (this.degraded) return false;
     try {
       if (filter) {
-        const meta = this.stmtL0GetMeta.get(recordId) as { user_id?: string; agent_id?: string; session_id?: string; session_key?: string } | undefined;
+        // O tipo declara o que a consulta traz: `stmtL0GetMeta` ja selecionava
+        // o `team_id`, mas o cast o escondia — e o filtro de isolamento
+        // comparava `undefined` com o `team_id` pedido (#105).
+        const meta = this.stmtL0GetMeta.get(recordId) as { team_id?: string; user_id?: string; agent_id?: string; session_id?: string; session_key?: string } | undefined;
         if (!meta || !rowMatchesIsolation(meta, filter)) return false;
       }
       this.db.exec("BEGIN");
@@ -2598,9 +2601,12 @@ export class VectorStore implements IMemoryStore {
 
     try {
       // First get all record_ids for the session
+      // `team_id` entra na consulta: o filtro de isolamento compara a linha
+      // com o filtro, e uma linha sem o `team_id` nunca casa com um filtro
+      // que o traz — a exclusao devolvia 0, em silencio (#105).
       const rows = this.db.prepare(
-        "SELECT record_id, session_key, session_id, user_id, agent_id FROM l0_conversations WHERE session_key = ? OR session_id = ?"
-      ).all(sessionId, sessionId) as Array<{ record_id: string; session_key: string; session_id: string; user_id: string; agent_id: string }>;
+        "SELECT record_id, session_key, session_id, team_id, user_id, agent_id FROM l0_conversations WHERE session_key = ? OR session_id = ?"
+      ).all(sessionId, sessionId) as Array<{ record_id: string; session_key: string; session_id: string; team_id: string; user_id: string; agent_id: string }>;
 
       if (rows.length === 0) return 0;
 
