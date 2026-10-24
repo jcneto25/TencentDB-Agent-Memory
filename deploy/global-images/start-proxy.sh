@@ -82,6 +82,10 @@ server:
   forwardTimeoutMs: 600000
 
 upstream:
+  agents:
+    dsh:
+      url: https://api.deepseek.com/anthropic
+      apiKey: ${PROXY_UPSTREAM_API_KEY}
   url: "${PROXY_UPSTREAM_URL}"
   apiKey: "${PROXY_UPSTREAM_API_KEY}"
 
