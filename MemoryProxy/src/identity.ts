@@ -136,6 +136,7 @@ export function extractClientIdentity(
     headers["x-cb-session-id"] ??
     headers["x-codebuddy-session-id"] ??
     headers["x-request-session"] ??
+    headers["x-deepseek-harness-session-id"] ??
     null;
 
   // Enterprise WeChat ID
