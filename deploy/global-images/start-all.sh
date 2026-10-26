@@ -17,6 +17,13 @@ source "$SCRIPT_DIR/_lib.sh"
 
 load_env
 
+# As correções que ainda não entraram numa imagem publicada vivem em overlays
+# (imagem publicada + um arquivo do repo). Construir antes de subir a stack
+# garante que a tag do `.env` exista — e um `PULL=1` não quebra: a imagem
+# local não está em registry, e o pull_image tolera isso.
+info "═══ Step 0/3: overlays ════════════════════════════════════════"
+"$SCRIPT_DIR/build-overlays.sh"
+
 # 一次性校验全部必填参数，避免拉起 memory 之后才发现 proxy 参数缺
 require_vars \
   MEMORY_CORE_IMAGE MEMORY_HUB_IMAGE PROXY_IMAGE \

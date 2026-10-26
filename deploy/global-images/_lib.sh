@@ -84,7 +84,16 @@ pull_image() {
   local image="$1"
   [[ "${PULL:-0}" == "1" ]] || return 0
   info "拉取镜像 $image"
-  $DOCKER pull "$image" || die "拉取 $image 失败。"
+  # Imagem montada localmente (overlay) não existe em registry: se ela já
+  # está aqui, o pull falhar não é erro — o build-overlays.sh a construiu.
+  if $DOCKER pull "$image" >/dev/null 2>&1; then
+    return 0
+  fi
+  if $DOCKER image inspect "$image" >/dev/null 2>&1; then
+    info "镜像 $image 已存在本地（本地 overlay），跳过拉取"
+    return 0
+  fi
+  die "拉取 $image 失败。"
 }
 
 # 幂等移除同名容器
